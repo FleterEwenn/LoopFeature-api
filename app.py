@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
-from loopfeature import generate_route, save_gpx
+from flask import Flask, request, jsonify, send_file
+import loopfeature
 from pathlib import Path
 import uuid
+import os
 
 app = Flask(__name__)
 storage_dir = Path(__file__).parent / "storage"
@@ -12,8 +13,8 @@ def generate():
     lon = float(request.args["lon"])
     dist = float(request.args["dist"])
 
-    list_points, total_dist = generate_route(lat, lon, dist)
-
+    list_points, total_dist = loopfeature.generate_route(lat, lon, dist)
+    
     dict_response = {"route": []}
     for point in list_points:
         pt_fordict = {
@@ -22,13 +23,22 @@ def generate():
             "elev" : point.elevation
         }
         dict_response["route"].append(pt_fordict)
-    
+
     gpxfile_id = str(uuid.uuid4())
-    save_gpx(list_points, gpxfile_id, str(storage_dir))
+
+    loopfeature.save_gpx(list_points, gpxfile_id, str(storage_dir))
 
     dict_response["id"] = gpxfile_id
 
     return jsonify(dict_response)
+
+@app.route("/getgpx/<id>")
+def getgpx(id):
+    file = str(id) + ".gpx"
+    if os.path.exists(storage_dir / file):
+        return send_file(storage_dir / file)
+    else:
+        return f"error : {id} file was not found"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
