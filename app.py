@@ -19,7 +19,7 @@ def generate():
         lat = float(request.args["lat"])
         lon = float(request.args["lon"])
         dist = float(request.args["dist"])
-    except ValueError:
+    except ValueError or TypeError:
         return jsonify({"error" : "args given are not float"}), 400
     except:
         return jsonify({"error" : "request takes 3 float args lat, lon and dist"}), 400
@@ -27,7 +27,7 @@ def generate():
     try:
         list_points, total_dist = loopfeature.generate_route(lat, lon, dist)
     except:
-        return jsonify({"error" : "generate_route return an error"}), 500
+        return jsonify({"error" : "generate_route return an error"}), 400
     
     dict_response = {"route": []}
     for point in list_points:
@@ -39,10 +39,6 @@ def generate():
         dict_response["route"].append(pt_fordict)
 
     gpxfile_id = str(uuid.uuid4())
-    filename = gpxfile_id + ".gpx"
-    while os.path.exists(storage_dir / filename):
-        gpxfile_id = str(uuid.uuid4())
-        filename = gpxfile_id + ".gpx"
 
     loopfeature.save_gpx(list_points, gpxfile_id, str(storage_dir))
 
@@ -52,11 +48,18 @@ def generate():
 
 @app.route("/getgpx/<id>")
 def getgpx(id):
-    file = str(id) + ".gpx"
-    if os.path.exists(storage_dir / file):
-        return send_file(storage_dir / file)
-    else:
+    file = storage_dir / f"{str(id)}.gpx"
+    if not file.exists():
         return jsonify({"error" : f"{id} file was not found"}), 404
+    
+    response = send_file(file, mimetype="application/gpx+xml")
+
+    @response.call_on_close
+    def removegpx():
+        file.unlink()
+
+    return response
+        
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=True)
