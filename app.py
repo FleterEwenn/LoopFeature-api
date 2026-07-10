@@ -3,6 +3,7 @@ import loopfeature
 from pathlib import Path
 import uuid
 import logging
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -10,16 +11,29 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+
 storage_dir = Path(__file__).parent / "storage"
+storage_dir.mkdir(exist_ok=True)
+
+def delete_expired_gpx():
+    for gpx_file in storage_dir.iterdir():
+        ctime = gpx_file.stat().st_mtime
+        now = time.time()
+
+        if now - ctime >= 24*3600:
+            gpx_file.unlink()
+            app.logger.info("expired gpx_file succesfully deleted - path=%s", str(gpx_file))
 
 @app.route("/")
 def home():
+    delete_expired_gpx()
     return jsonify({
         "name" : "LoopFeature-API"
     })
 
 @app.route("/generate")
 def generate():
+    delete_expired_gpx()
     try:
         lat = float(request.args["lat"])
         lon = float(request.args["lon"])
@@ -62,6 +76,7 @@ def generate():
 
 @app.route("/getgpx/<id>")
 def getgpx(id):
+    delete_expired_gpx()
     file = storage_dir / f"{id}.gpx"
     if not file.exists():
         app.logger.warning("gpx file not found : %s", file)
@@ -73,7 +88,7 @@ def getgpx(id):
     def removegpx():
         try:
             file.unlink()
-            app.logger.info("gpx file successfully deleted - file=%s", file)
+            app.logger.info("downloaded gpx file successfully deleted - file=%s", file)
         except Exception:
             app.logger.exception("cannot remove gpx file : %s", file)
 
