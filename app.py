@@ -26,9 +26,9 @@ def delete_expired_gpx():
 
 @app.route("/")
 def home():
-    delete_expired_gpx()
     return jsonify({
-        "name" : "LoopFeature-API"
+        "status": "ok",
+        "service": "LoopFeature API"
     })
 
 @app.route("/generate")
@@ -38,6 +38,16 @@ def generate():
         lat = float(request.args["lat"])
         lon = float(request.args["lon"])
         dist = float(request.args["dist"])
+        if dist <= 0:
+            app.logger.exception("negative distance - dist=%s", request.args.get("dist"))
+            return jsonify({"error" : "distance(dist) must be positive"}), 400
+        if lat > 90 or lat < -90:
+            app.logger.exception("not valide latitude - lat=%s", request.args.get("lat"))
+            return jsonify({"error" : "latitude(lat) must be between -90 and 90"}), 400
+        if lon > 90 or lon < -90:
+            app.logger.exception("not valide longitude - lon=%s", request.args.get("lon"))
+            return jsonify({"error" : "longitude(lon) must be between -90 and 90"}), 400
+
     except (ValueError, TypeError) as e:
         app.logger.exception("parameters conversion error - lat=%s, lon=%s, dist=%s", request.args.get("lat"), request.args.get("lon"), request.args.get("dist"))
         return jsonify({"error" : "args given are not float"}), 400

@@ -10,7 +10,7 @@ Flask==3.1.3
 idna==3.18
 itsdangerous==2.2.0
 Jinja2==3.1.6
--e git+https://github.com/FleterEwenn/LoopFeature.git@a080946aae5305b5c7d43cd9a63db260706721e5#egg=loopfeature
+git+https://github.com/FleterEwenn/LoopFeature.git#egg=loopfeature
 MarkupSafe==3.0.3
 numpy==2.5.0
 pyparsing==3.3.2
@@ -18,4 +18,4 @@ rasterio==1.5.0
 requests==2.34.2
 urllib3==2.7.0
 Werkzeug==3.1.8
-gunicorn
+gunicorn==23.0.0
