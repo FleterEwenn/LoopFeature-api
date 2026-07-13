@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 import loopfeature
 from pathlib import Path
 import uuid
@@ -11,6 +12,7 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+CORS(app)
 
 storage_dir = Path(__file__).parent / "storage"
 storage_dir.mkdir(exist_ok=True)
